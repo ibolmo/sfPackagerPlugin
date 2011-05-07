@@ -28,20 +28,14 @@ function end_js()
 function include_js()
 {
 	$packager = Packager::get_instance();
-	$files = sfFinder::type('any')->name('*/package.yml')->exec('dump')->in(sfConfig::get('sf_lib_dir') . '/js/');
-	foreach ($files as $file) {
-		var_dump($file);
-		#$packager->add_package($packager);
-	}
 	
+	$files = sfFinder::type('any')->name('*package.yml')->name('*package.json')->in(sfConfig::get('sf_lib_dir') . '/js/');
+	foreach ($files as $package) $packager->add_package($package);
+	
+	$source = new Source(sfConfig::get('sf_app'));
+	$source->requires(PackagerHelper::$scripts);
 	# todo(ibolmo): Save to a cached file. Return a content tag to the cached file.
-	#echo content_tag('script', $packager->build(PackagerHelper::$scripts));
-}
-
-function dump($dir, $file)
-{
-	var_dump($file);
-	return true;
+	echo content_tag('script', Packager::strip_blocks($source->build(), '1.2compat'));
 }
 
 
