@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/../../vendor/Source.php';
+require_once __DIR__ . '/../../vendor/packager/Source.php';
 
 class PackagerHelper
 {
@@ -19,7 +19,7 @@ function js($name = '', $requires = array(), $provides = null)
 function end_js()
 {
 	preg_match('/<script[^>]*>([\s\S]*?)<\/script>/i', ob_get_clean(), $matches);
-	$source = end(PackagerHelper::$scripts[]);
+	$source = end(PackagerHelper::$scripts);
 	$source->set_code($matches[1]);
 	$source->parse();
 }
@@ -27,9 +27,21 @@ function end_js()
 # todo(ibolmo): May crash and burn, since it's duplicated.
 function include_js()
 {
-	# todo(ibolmo): Get all javascript files? For each, include in Packager.
+	$packager = Packager::get_instance();
+	$files = sfFinder::type('any')->name('*/package.yml')->exec('dump')->in(sfConfig::get('sf_lib_dir') . '/js/');
+	foreach ($files as $file) {
+		var_dump($file);
+		#$packager->add_package($packager);
+	}
+	
 	# todo(ibolmo): Save to a cached file. Return a content tag to the cached file.
-	echo content_tag('script', Packager::build(PackagerHelper::$scripts));
+	#echo content_tag('script', $packager->build(PackagerHelper::$scripts));
+}
+
+function dump($dir, $file)
+{
+	var_dump($file);
+	return true;
 }
 
 
