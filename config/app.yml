@@ -1,0 +1,11 @@
+all:
+  sf_packager_plugin:
+    compile: false
+    check_dates: false
+    use_compression: true
+    
+dev:
+  sf_packager_plugin:
+    compile: true
+    check_dates: true
+    use_compression: false
