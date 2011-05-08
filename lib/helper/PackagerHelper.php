@@ -16,9 +16,9 @@ class PackagerHelper
 	
 	static function shouldCompile($file)
 	{
-		$compile = false;
-		if (sfConfig::get('app_sf_packager_plugin_check_dates')) $compile = (time() - filemtime($file)) > 86400;
-		return $compile || sfConfig::get('app_sf_packager_plugin_compile') || !file_exists($file);
+		if (sfConfig::get('app_sf_packager_plugin_compile')) return true;
+		if (!file_exists($file)) return true;
+		if (sfConfig::get('app_sf_packager_plugin_check_dates') && (time() - filemtime($file)) > 86400) return true;
 	}
 }
 
@@ -41,6 +41,8 @@ function end_js()
 
 function include_js()
 {
+	if (empty(PackagerHelper::$scripts)) return;
+	
 	$packager = Packager::get_instance();
 	
 	$files = sfFinder::type('any')->name('*package.yml')->name('*package.json')->in(sfConfig::get('sf_lib_dir') . '/js/');
@@ -48,6 +50,7 @@ function include_js()
 	
 	$source = new Source(sfConfig::get('sf_app'));
 	$source->requires(PackagerHelper::$scripts);
+
 	
 	$key = sha1(implode('', PackagerHelper::$scripts)).'-'.sfConfig::get('sf_environment', 'prod');
 	$file = sfConfig::get('sf_web_dir').'/js/cache/'.$key.'.js';
