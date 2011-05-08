@@ -1,10 +1,25 @@
 <?php
 
 require_once __DIR__ . '/../../vendor/packager/Source.php';
+require_once __DIR__ . '/../../vendor/jsmin-php/jsmin.php';
 
 class PackagerHelper
 {
 	static $scripts = array();
+	
+	static function compile($source)
+	{
+		$code = Packager::strip_blocks($source->build(), '1.2compat');
+		if (sfConfig::get('app_sf_packager_plugin_use_compression')) $code = JSMin::minify($code);
+		return $code;
+	}
+	
+	static function shouldCompile($file)
+	{
+		$compile = false;
+		if (sfConfig::get('app_sf_packager_plugin_check_dates')) $compile = (time() - filemtime($file)) > 86400;
+		return $compile || sfConfig::get('app_sf_packager_plugin_compile') || !file_exists($file);
+	}
 }
 
 function js($name = '', $requires = array(), $provides = null)
@@ -24,7 +39,6 @@ function end_js()
 	$source->parse();
 }
 
-# todo(ibolmo): May crash and burn, since it's duplicated.
 function include_js()
 {
 	$packager = Packager::get_instance();
@@ -34,15 +48,18 @@ function include_js()
 	
 	$source = new Source(sfConfig::get('sf_app'));
 	$source->requires(PackagerHelper::$scripts);
-	# todo(ibolmo): Save to a cached file. Return a content tag to the cached file.
-	echo content_tag('script', Packager::strip_blocks($source->build(), '1.2compat'));
+	
+	$key = sha1(implode('', PackagerHelper::$scripts)).'-'.sfConfig::get('sf_environment', 'prod');
+	$file = sfConfig::get('sf_web_dir').'/js/cache/'.$key.'.js';
+	if (PackagerHelper::shouldCompile($file)) file_put_contents($file, PackagerHelper::compile($source));
+	
+	echo content_tag('script', '', array('type' => 'text/javascript', 'src' => javascript_path('cache/' . $key)));
 }
 
 
 function require_js($module)
 {
-	$filepath = sprintf('%s/js/%s.js', sfConfig::get('sf_lib_dir'), $module);
-	if (!file_exists($filepath)) throw new sfException("JavaScript Module ($module) Not Found");
-	
-	PackagerHelper::$scripts[] = new Source(sfConfig::get('sf_app'), $filepath);
+	$files = sfFinder::type('any')->name($module)->in(sfConfig::get('sf_lib_dir').'/js/');
+	if (empty($files)) throw new sfException("Could not find '$module'.");
+	foreach ($files as $file) PackagerHelper::$scripts[] = new Source(sfConfig::get('sf_app'), $file);
 }
