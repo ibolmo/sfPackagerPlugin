@@ -1,3 +1,6 @@
+[submodule "vendor/packager"]
+	path = vendor/packager
+	url = git://github.com/ibolmo/packager.git
 [submodule "vendor/jsmin-php"]
 	path = vendor/jsmin-php
 	url = git://github.com/rgrove/jsmin-php.git
