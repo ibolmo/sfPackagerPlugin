@@ -28,6 +28,7 @@ function js($name = '', $requires = array(), $provides = null)
 	if ($name) $script->set_name($name);
 	if ($requires) $script->requires($requires);
 	if ($provides) $script->provides($provides);
+	ob_start();
 }
 
 # note(ibolmo): CDATA is kept.
