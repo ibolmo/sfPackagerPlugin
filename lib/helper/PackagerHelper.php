@@ -74,7 +74,7 @@ function include_js()
 	$file = $cache_dir . "/$key.js";
 	if (PackagerHelper::shouldCompile($file)) file_put_contents($file, PackagerHelper::compile($source));
 
-	echo content_tag('script', '', array('type' => 'text/javascript', 'src' => javascript_path('cache/' . $key)));
+	echo content_tag('script', '', array('type' => 'text/javascript', 'src' => "/cache/js/$key.js"));
 
 	foreach (PackagerHelper::$runtime_code as $code){
 		if (sfConfig::get('app_sf_packager_plugin_use_compression')) $code = JSMin::minify($code);

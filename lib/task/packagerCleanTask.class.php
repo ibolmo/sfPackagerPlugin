@@ -14,10 +14,10 @@ Call it with:
   [php symfony less:compile|INFO]
 EOF;
 	}
-	
+
 	protected function execute($arguments = array(), $options = array())
 	{
-		$js_cache_dir = sfConfig::get('sf_web_dir') . '/js/cache';
-		`rm -f $js_cache_dir/*`;
+		$js_cache_dir = escapeshellarg(sfConfig::get('sf_web_dir') . '/cache/js/*');
+		`rm -f $js_cache_dir`;
 	}
 }
