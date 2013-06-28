@@ -56,23 +56,26 @@ function include_js()
 {
 	if (empty(PackagerHelper::$scripts)) return;
 
-	$packager = Packager::get_instance();
-
-	$files = sfFinder::type('any')->name('*package.yml')->name('*package.json')->in(sfConfig::get('sf_lib_dir') . '/js/');
-	foreach ($files as $package) $packager->add_package($package);
-
-	$source = new Source(sfConfig::get('sf_app'));
-	$source->requires(PackagerHelper::$scripts);
-
-	$env = sfContext::getInstance()->getConfiguration()->getEnvironment();
-	if (!$env) $env = 'prod';
-	$key = sha1(implode('', PackagerHelper::$scripts)).'-'.$env;
-
+	$env = sfContext::getInstance()->getConfiguration()->getEnvironment() ?: 'prod';
+	$key = sha1(implode('', PackagerHelper::$scripts)) . '-' . $env;
 	$cache_dir = sfConfig::get('sf_web_dir') . '/cache/js';
-	if (!is_writable($cache_dir) && !mkdir($cache_dir, 0777, true)) throw new sfException('Could not write cache dir image thumbnails.');
-
 	$file = $cache_dir . "/$key.js";
-	if (PackagerHelper::shouldCompile($file)) file_put_contents($file, PackagerHelper::compile($source));
+
+	if (PackagerHelper::shouldCompile($file) || !file_exists($file)){
+		$packager = Packager::get_instance();
+
+		$files = sfFinder::type('any')->name('*package.yml')->name('*package.json')->in(sfConfig::get('sf_lib_dir') . '/js/');
+		foreach ($files as $package) $packager->add_package($package);
+
+		$source = new Source(sfConfig::get('sf_app'));
+		$source->requires(PackagerHelper::$scripts);
+
+		if (!is_writable($cache_dir) && !mkdir($cache_dir, 0777, true)) throw new sfException('Could not write cache js dir.');
+
+		$code = PackagerHelper::compile($source);
+		if (sfConfig::get('app_sf_packager_plugin_user_compression')) $code = JSMin::minify($code);
+		file_put_contents($file, $code);
+	}
 
 	echo content_tag('script', '', array('type' => 'text/javascript', 'src' => "/cache/js/$key.js"));
 
